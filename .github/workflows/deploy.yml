@@ -1,0 +1,63 @@
+name: Terraform Multi-Tenant Deployment (CLI Auth)
+ 
+on:
+
+  push:
+
+    branches:
+
+      - main  # Runs when changes are pushed to 'main'
+ 
+permissions:
+
+  contents: read
+ 
+jobs:
+
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+
+      matrix:
+
+        config: ${{ fromJson(secrets.AZURE_SUBSCRIPTIONS_TENANTS) }}  # Load subscription and tenant mapping
+ 
+    steps:
+
+      - name: Checkout Repository
+
+        uses: actions/checkout@v3
+ 
+      - name: Azure CLI Login (Interactive)
+
+        run: |
+
+          az login --tenant ${{ matrix.config.tenant }} 
+
+          az account set --subscription ${{ matrix.config.subscription }}
+ 
+      - name: Setup Terraform
+
+        uses: hashicorp/setup-terraform@v2
+ 
+      - name: Terraform Init
+
+        run: terraform init
+
+        working-directory: ${{ matrix.config.folder }}
+ 
+      - name: Terraform Plan
+
+        run: terraform plan -out=tfplan
+
+        working-directory: ${{ matrix.config.folder }}
+ 
+      - name: Terraform Apply
+
+        run: terraform apply -auto-approve
+
+        working-directory: ${{ matrix.config.folder }}
+
+ 
