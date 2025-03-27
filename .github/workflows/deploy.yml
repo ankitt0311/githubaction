@@ -3,7 +3,7 @@ name: Terraform Multi-Tenant Deployment (CLI Auth)
 on:
   push:
     branches:
-      - master  # Runs when changes are pushed to 'master'
+      - master
 
 permissions:
   contents: read
@@ -19,6 +19,13 @@ jobs:
         run: |
           echo "Extracting JSON from GitHub Secret..."
           JSON_STRING='${{ secrets.AZURE_SUBSCRIPTIONS_TENANTS }}'
+
+          # Ensure JSON is not empty
+          if [[ -z "$JSON_STRING" ]]; then
+            echo "Error: AZURE_SUBSCRIPTIONS_TENANTS secret is empty!"
+            exit 1
+          fi
+
           echo "matrix=$(echo "$JSON_STRING" | jq -c '.')" >> "$GITHUB_OUTPUT"
 
   deploy:
@@ -26,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        config: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}  # Load dynamically
+        config: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
 
     steps:
       - name: Checkout Repository
