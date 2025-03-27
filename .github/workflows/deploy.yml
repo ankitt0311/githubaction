@@ -1,63 +1,53 @@
 name: Terraform Multi-Tenant Deployment (CLI Auth)
- 
+
 on:
-
   push:
-
     branches:
+      - master  # Runs when changes are pushed to 'master'
 
-      - master  # Runs when changes are pushed to 'main'
- 
 permissions:
-
   contents: read
- 
+
 jobs:
+  prepare-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Extract Azure Subscription JSON
+        id: set-matrix
+        run: |
+          echo "Extracting JSON from GitHub Secret..."
+          JSON_STRING='${{ secrets.AZURE_SUBSCRIPTIONS_TENANTS }}'
+          echo "matrix=$(echo "$JSON_STRING" | jq -c '.')" >> "$GITHUB_OUTPUT"
 
   deploy:
-
+    needs: prepare-matrix
     runs-on: ubuntu-latest
-
     strategy:
-
       matrix:
+        config: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}  # Load dynamically
 
-        config: ${{ fromJson(secrets.AZURE_SUBSCRIPTIONS_TENANTS) }}  # Load subscription and tenant mapping
- 
     steps:
-
       - name: Checkout Repository
-
         uses: actions/checkout@v3
- 
+
       - name: Azure CLI Login (Interactive)
-
         run: |
-
-          az login --tenant ${{ matrix.config.tenant }} 
-
+          az login --tenant ${{ matrix.config.tenant }}
           az account set --subscription ${{ matrix.config.subscription }}
- 
+
       - name: Setup Terraform
-
         uses: hashicorp/setup-terraform@v2
- 
+
       - name: Terraform Init
-
         run: terraform init
-
         working-directory: ${{ matrix.config.folder }}
- 
+
       - name: Terraform Plan
-
         run: terraform plan -out=tfplan
-
         working-directory: ${{ matrix.config.folder }}
- 
+
       - name: Terraform Apply
-
         run: terraform apply -auto-approve
-
         working-directory: ${{ matrix.config.folder }}
-
- 
