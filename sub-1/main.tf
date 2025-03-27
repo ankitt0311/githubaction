@@ -4,7 +4,7 @@ provider "azurerm" {
 }
  
 resource "azurerm_monitor_metric_alert" "cpu_alert" {
-  name                = "cpu-high-alert"
+  name                = "cpu-high-alert-kelvi2"
   resource_group_name = "test-sms-alert-rg"
   scopes              = ["/subscriptions/08c98cf6-15de-4d54-9fe0-d49c61c07abe/resourceGroups/Dev-test/providers/Microsoft.Compute/virtualMachines/demotestfordevrev"]
   description         = "{\"Severity\": \"3\", \"TargetResourceType\": \"Microsoft.Compute/virtualMachines\", \"MetricName\": \"Percentage CPU\", \"Customer\": \"Cust1\"}"
